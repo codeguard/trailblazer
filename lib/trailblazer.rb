@@ -1,5 +1,8 @@
 require "trailblazer/version"
+require 'trailblazer/config'
 
 module Trailblazer
-  # Your code goes here...
+  def self.execute
+    config = Config.new
+  end
 end

@@ -49,6 +49,12 @@ With no parameters, `trailblazer` will look for a configuration file at **~/.tra
 # (The VPC and other related resources can be inferred from the table.)
 route_table: rtb-a87b92e3
 
+# Credentials for Amazon Web Services. If not specified, the environment variables
+# AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY will be used, or IAM role metadata.
+aws:
+  access_key_id: AKIAIABX3KKR4VHCHPGB
+  secret_access_key: eAQXj6cGbw0FiMs0xZMt6fxqnMFwcZXoHy1K+y7Y
+
 # These values refer to Amazon's IP Ranges JSON file. All values given in this example
 # are the defaults.
 ip_ranges:
@@ -84,13 +90,12 @@ routes:
   # or an array of same.
 
   # NAT instance; default route
-  i-8422ea95: 0.0.0.0/0
+  0.0.0.0/0: i-8422ea95
 
   # The special value 'gateway' specifies the owning
   # VPC's Internet gateway.
-  gateway:
-    - 54.231.99.21    # RDS instance (example)
-    - 22.94.331.0/24  # Home network (example)
+  54.231.99.21: gateway    # RDS instance (example)
+  22.94.331.0/24: gateway  # Home network (example)
 
 # If configured, trailblazer will send reports to the given SNS topic
 # (eliminating the need for a persistent log file).
@@ -105,7 +110,8 @@ notification:
 
 ### Command Line Options
 
-* `-t id`, `--route-table id`: Canonical ID for the route table to update
+# `-c config.yml`, `--config config.yml`: Specify a filepath or URL for configuration YAML file. Defaults to **~/.trailblazer.yml**.
+* `-t id`, `--route-table id`: Canonical ID for the route table to update.
 * `-r CIDR=target`, `--route CIDR=target`: Custom routes. May be specified multiple times.
 * `--ip-target target`: Target for routes from ip-ranges list. Defaults to *gateway*.
 * `--ip-url url`: Location of ip-ranges.json list. Defaults to 'https://ip-ranges.amazon.com/ip-ranges.json'.
