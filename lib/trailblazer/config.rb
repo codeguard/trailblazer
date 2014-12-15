@@ -13,12 +13,18 @@ module Trailblazer
         cfgfile = cfgfile_options(filename)
         @config = merge_options cfgfile, cmdline
       else
-        @config = merge_options {}, cmdline
+        @config = merge_options Hash.new, cmdline
       end
     end
 
-    def method_missing(name, *args, &blk) do
-      @config[name.to_sym] or super
+    def method_missing(name, *args, &blk)
+      if name =~ /(.+)\?$/
+        !@config[$1.to_sym].nil?
+      elsif @config.key?(name.to_sym)
+        @config[name.to_sym]
+      else
+        super
+      end
     end
 
 
@@ -28,15 +34,15 @@ module Trailblazer
      Trollop.options do
        version "trailblazer #{Trailblazer::VERSION}"
        opt :config, 'Configuration file', default: File.expand_path('~/.trailblazer.yml')
-       opt :route_table, 'Route table (canonical ID)', short: :t
-       opt :route, "Custom routes to add to route table ('CIDR=target')", multi: true, type: :strings
-       opt :ip_target, 'Target for routes from ip-ranges list', default: 'gateway'
-       opt :ip_url, 'Location of ip-ranges.json list', default: 'https://ip-ranges.amazon.com/ip-ranges.json'
-       opt :ip_region, 'Region filter for ip-ranges list', multi: true, type: :strings
-       opt :ip_service, 'Service filter for ip-ranges list', multi: true, type: :strings
        opt :access_key, 'AWS access key', type: :string
        opt :secret_key, 'AWS secret key', type: :string
-       opt :notification, 'SNS topic for results (canonical ID)'
+       opt :route_table, 'Route table (canonical ID)', type: :string, short: :t
+       opt :route, "Custom routes to add to route table ('CIDR=target')", multi: true, type: :strings
+       opt :ip_target, 'Target for routes from ip-ranges list', default: 'gateway', short: :g
+       opt :ip_url, 'Location of ip-ranges.json list', default: 'https://ip-ranges.amazonaws.com/ip-ranges.json', short: :u
+       opt :ip_region, 'Region filter for ip-ranges list (default: us-east-1, GLOBAL)', multi: true, type: :strings, short: :e
+       opt :ip_service, 'Service filter for ip-ranges list (default: AMAZON)', multi: true, type: :strings, short: :a
+       opt :notification, 'SNS topic for results (canonical ID)', type: :string
        opt :verbose, 'Send notification on runs with no changes'
      end
    end
@@ -77,7 +83,8 @@ module Trailblazer
        cfg[:ip_regions] += cmd.delete(:ip_region)
      end
 
-     if cmd[:route]
+     cfg[:routes] ||= {}
+     unless cmd[:route].empty?
        cmd_routes = cmd.delete(:route).collect { |r| r.split('=') }
        cfg[:routes].merge! Hash[cmd_routes]
      end
