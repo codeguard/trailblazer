@@ -33,11 +33,6 @@ When run, `trailblazer` replaces the contents of the specified routing table as 
 ** Routes from the routing table that are not present in the merged list are deleted.
 ** Routes from the merged list that are not present in the routing table are added.
 ** As a safety measure, an existing route matching `0.0.0.0/0` will be left alone unless explicitly overridden with a different target.
-* The route table is tagged with metadata to report status and prevent unnecessary work on the next sync round:
-** *last_synced_at* - The timestamp at completion.
-** *last_updated_at* - The timestamp of the last time the route table was changed.
-** *ip_range_token* - The sync token from the current **ip-ranges.json** file.
-** *custom_route_hash* - Hash value of the current custom routes (if any).
 * If a notification topic was configured, a report is sent summarizing changes.
 
 
@@ -97,29 +92,45 @@ routes:
   54.231.99.21: gateway    # RDS instance (example)
   22.94.331.0/24: gateway  # Home network (example)
 
-# If configured, trailblazer will send reports to the given SNS topic
-# (eliminating the need for a persistent log file).
-notification:
-  # Amazon's canonical ARN for the SNS topic.
-  topic: arn:aws:sns:us-east-1:1234567890123456:mytopic
 
-  # If true, trailblazer will send a report on every run.
-  # If false (the default), reports are only sent on errors or when the route table is changed.
+# trailblazer will always send activity to standard output, and
+# can optionally record to a file.
+logging:
+  # Default is 'info'. Log levels are as follows:
+  # * debug: Every operation and comparison
+  # * info: Start, stop, and number of changes
+  # * warn: Specific changes made to route table
+  # * error: Exceptions and failures
+  level: info
+
+  # No default. Specify a value for persistent logging.
+  filename: ~/trailblazer.log
+
+# Sends summary info via SNS to get the attention of staff. Set a topic to
+# enable.
+notification:
+  # Amazon's canonical ARN for the SNS topic. No default.
+  sns_topic: arn:aws:sns:us-east-1:1234567890123456:mytopic
+
+  # If true, trailblazer will send a summary every time trailblazer is run.
+  # If false (the default), notifications are only sent when the route table
+  # is changed or on errors.
   verbose: true
 ```
 
 ### Command Line Options
 
-# `-c config.yml`, `--config config.yml`: Specify a filepath or URL for configuration YAML file. Defaults to **~/.trailblazer.yml**.
-* `-t id`, `--route-table id`: Canonical ID for the route table to update.
-* `-r CIDR=target`, `--route CIDR=target`: Custom routes. May be specified multiple times.
+# `--config config.yml`: Filepath for configuration YAML file. Defaults to **~/.trailblazer.yml**.
+* `--route-table id`: Canonical ID for the route table to update.
+* `--route CIDR=target`: Custom routes. May be specified multiple times.
 * `--ip-target target`: Target for routes from ip-ranges list. Defaults to *gateway*.
 * `--ip-url url`: Location of ip-ranges.json list. Defaults to 'https://ip-ranges.amazon.com/ip-ranges.json'.
 * `--ip-region region`: Region filter for ip-ranges list. May be specified multiple times.
 * `--ip-service service`: Service filter for ip-ranges list. May be specified multiple times.
-* `-n`, `--notification`: SNS topic ARN for run results.
-* `-v`, `--verbose`: Send a report on every run.
-
+* `--loglevel level`: debug, info, warn, error; defaults to info.
+* `--logfile ~/trailblazer.log`: Local path for event logging.
+* `--notification`: SNS topic ARN for summaries of run results.
+* `--verbose`: Send an SNS report on every run; otherwise only on changes or errors.
 
 
 ## Contributing

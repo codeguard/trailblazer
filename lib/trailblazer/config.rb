@@ -37,13 +37,15 @@ module Trailblazer
        opt :access_key, 'AWS access key', type: :string
        opt :secret_key, 'AWS secret key', type: :string
        opt :route_table, 'Route table (canonical ID)', type: :string, short: :t
-       opt :route, "Custom routes to add to route table ('CIDR=target')", multi: true, type: :strings
+       opt :route, "Custom routes to add to route table ('CIDR=target')", multi: true, type: :strings, short: :r
        opt :ip_target, 'Target for routes from ip-ranges list', default: 'gateway', short: :g
        opt :ip_url, 'Location of ip-ranges.json list', default: 'https://ip-ranges.amazonaws.com/ip-ranges.json', short: :u
        opt :ip_region, 'Region filter for ip-ranges list (default: us-east-1, GLOBAL)', multi: true, type: :strings, short: :e
        opt :ip_service, 'Service filter for ip-ranges list (default: AMAZON)', multi: true, type: :strings, short: :a
-       opt :notification, 'SNS topic for results (canonical ID)', type: :string
-       opt :verbose, 'Send notification on runs with no changes'
+       opt :loglevel, 'Event detail: debug, info, warn, error', default: 'info', short: :l
+       opt :logfile, 'Local file for event logging', type: :string, short: :f
+       opt :notification, 'SNS topic for results (canonical ID)', type: :string, short: :n
+       opt :verbose, 'Send notification on runs with no changes', short: :v
      end
    end
 
@@ -60,6 +62,11 @@ module Trailblazer
        opts[:ip_url] = ip['url']
        opts[:ip_services] = ip['services']
        opts[:ip_regions] = ip['regions']
+     end
+
+     if logging = cfg['logging']
+       opts[:logfile] = logging['filename']
+       opts[:loglevel] = logging['level']
      end
 
      if notify = cfg['notification']
