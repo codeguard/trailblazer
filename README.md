@@ -110,7 +110,7 @@ logging:
 # enable.
 notification:
   # Amazon's canonical ARN for the SNS topic. No default.
-  sns_topic: arn:aws:sns:us-east-1:1234567890123456:mytopic
+  topic: arn:aws:sns:us-east-1:1234567890123456:mytopic
 
   # If true, trailblazer will send a summary every time trailblazer is run.
   # If false (the default), notifications are only sent when the route table

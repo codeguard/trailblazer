@@ -9,7 +9,7 @@ module Trailblazer
     attr_reader :routes, :route_table
 
     def initialize(config, route_table)
-      @logger = Logging.logger[self]
+      @logger = Logging.logger['ROUTES']
       @ec2 = AWS::EC2.new
       @ranges = range_list(config.ip_url)
       filter_regions(*config.ip_regions) unless config.ip_regions.empty?
@@ -63,7 +63,7 @@ module Trailblazer
           gateway
         when /^i-/
           ec2.instances[name]
-        when /^igw-/
+        when /^(igw|pcx|vgw)-/
           ec2.internet_gateways[name]
         when /^eni-/
           ec2.network_interfaces[name]

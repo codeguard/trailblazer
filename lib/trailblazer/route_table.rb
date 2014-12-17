@@ -6,7 +6,7 @@ module Trailblazer
     attr_reader :table, :vpc, :gateway
 
     def initialize(config)
-      @logger = Logging.logger[self]
+      @logger = Logging.logger['TABLE']
       raise "No route table declared in configuration! See `trailblazer -h`" unless config.route_table?
       @ec2 = AWS::EC2.new
 

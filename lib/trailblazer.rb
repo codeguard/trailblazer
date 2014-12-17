@@ -10,17 +10,17 @@ require 'trailblazer/routes'
 module Trailblazer
   def self.execute
     config = Config.new
-    configure_aws(config)
     configure_logger(config)
+    configure_aws(config)
 
     logger.info "Starting route table update for #{config.route_table}"
     table = RouteTable.new(config)
     routes = Routes.new(config, table)
     changes = table.update(routes)
+    logger.info "Update summary: #{changes}"
     logger.info "Finished route table update for #{config.route_table}"
   rescue => e
     logger.error e
-    raise
   ensure
     send_sns(config.notification, config.route_table) if config.notification?
   end
@@ -43,8 +43,8 @@ module Trailblazer
     layout = Logging.layouts.pattern(pattern: "%d [%l] %m\n", date_pattern: '%Y-%m-%d %H:%M')
     appenders = [Logging.appenders.stdout(layout: layout)]
 
-    if config.filename?
-      appenders << Logging.appenders.file('file', filename: config.filename, layout: layout)
+    if config.logfile?
+      appenders << Logging.appenders.file('file', filename: config.logfile, layout: layout)
     end
 
     if config.notification?
@@ -56,11 +56,12 @@ module Trailblazer
   end
 
   def self.logger
-    @logger ||= Logging.logger[self]
+    @logger ||= Logging.logger['MAIN']
   end
 
   def self.send_sns(arn, table)
-    message = Logging.appenders['sns'].sio.read
+    lines = Logging.appenders['sns'].sio
+    message = lines.to_s
     if message.empty?
       logger.debug "SNS report is empty; not sending"
     else
@@ -69,5 +70,7 @@ module Trailblazer
       topic = sns.topics[arn]
       topic.publish message, subject: "Route table update for #{table}"
     end
+  rescue => e
+    logger.error e
   end
 end
